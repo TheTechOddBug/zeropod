@@ -181,11 +181,16 @@ func (s *Server) Stop(ctx context.Context) {
 	}
 
 	for _, l := range s.listeners {
-		l.Close()
+		if err := l.Close(); err != nil {
+			log.G(ctx).WithError(err).Error("closing listener")
+		}
+	}
+
+	if err := s.closeMaps(); err != nil {
+		log.G(ctx).WithError(err).Error("closing bpf maps")
 	}
 
 	log.G(ctx).Debugf("removing %s", PinPath(s.sandboxPid))
-
 	_ = os.RemoveAll(PinPath(s.sandboxPid))
 
 	s.wg.Wait()
@@ -391,6 +396,26 @@ func (s *Server) loadPinnedMaps() error {
 	}
 
 	return nil
+}
+
+func (s *Server) closeMaps() error {
+	errs := []error{}
+	if s.maps.ActiveConnections != nil {
+		errs = append(errs, s.maps.ActiveConnections.Close())
+	}
+	if s.maps.DisableRedirect != nil {
+		errs = append(errs, s.maps.DisableRedirect.Close())
+	}
+	if s.maps.EgressRedirects != nil {
+		errs = append(errs, s.maps.EgressRedirects.Close())
+	}
+	if s.maps.IngressRedirects != nil {
+		errs = append(errs, s.maps.IngressRedirects.Close())
+	}
+	if s.maps.SocketTracker != nil {
+		errs = append(errs, s.maps.SocketTracker.Close())
+	}
+	return errors.Join(errs...)
 }
 
 func (s *Server) mapPath(name string) string {

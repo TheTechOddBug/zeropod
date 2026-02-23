@@ -324,6 +324,7 @@ func (c *Container) Stop(ctx context.Context) {
 	c.sendEvent(status)
 	c.StopActivator(ctx)
 	c.cleanupImage(ctx)
+	_ = c.netNS.Close()
 }
 
 func (c *Container) cleanupImage(ctx context.Context) {
