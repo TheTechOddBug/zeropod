@@ -181,7 +181,7 @@ func (s *Server) Stop(ctx context.Context) {
 	}
 
 	for _, l := range s.listeners {
-		if err := l.Close(); err != nil {
+		if err := l.Close(); err != nil && !errors.Is(err, net.ErrClosed) {
 			log.G(ctx).WithError(err).Error("closing listener")
 		}
 	}
