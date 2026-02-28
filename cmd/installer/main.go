@@ -91,6 +91,8 @@ network-lock skip
     "zeropod.ctrox.dev/disable-probe-detection",
     "zeropod.ctrox.dev/probe-buffer-size",
     "zeropod.ctrox.dev/disable-migrate-data",
+    "zeropod.ctrox.dev/connect-timeout",
+    "zeropod.ctrox.dev/proxy-timeout",
     "io.containerd.runc.v2.group"
   ]
 
@@ -114,6 +116,8 @@ network-lock skip
     "zeropod.ctrox.dev/disable-probe-detection",
     "zeropod.ctrox.dev/probe-buffer-size",
     "zeropod.ctrox.dev/disable-migrate-data",
+    "zeropod.ctrox.dev/connect-timeout",
+    "zeropod.ctrox.dev/proxy-timeout",
     "io.containerd.runc.v2.group"
   ]
 
