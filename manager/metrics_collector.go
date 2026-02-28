@@ -155,6 +155,7 @@ func collectMetricsOverTTRPC(ctx context.Context, sock string) ([]*v1.ContainerM
 	if err != nil {
 		return nil, err
 	}
+	defer conn.Close()
 
 	resp, err := v1.NewShimClient(ttrpc.NewClient(conn)).Metrics(ctx, &v1.MetricsRequest{})
 	if err != nil {
