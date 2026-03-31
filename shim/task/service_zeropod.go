@@ -160,13 +160,14 @@ func (w *wrapper) Create(ctx context.Context, r *taskAPI.CreateTaskRequest) (_ *
 		skipStart, err := zshim.MigrationRestore(ctx, r, cfg)
 		if err != nil {
 			if errors.Is(err, zshim.ErrRestoreRequestFailed) ||
-				errors.Is(err, zshim.ErrRestoreDial) {
+				errors.Is(err, zshim.ErrRestoreDial) ||
+				errors.Is(err, zshim.ErrInvalidCheckpoint) {
 				// if the restore fails with ErrRestoreRequestFailed it's very
 				// likely it simply did not find a matching migration. Equally,
 				// if the shim can't manage to dial the node service there's no
 				// chance it can be restored. We log it and create the container
 				// from scratch.
-				log.G(ctx).Errorf("restore request failed: %s", err)
+				log.G(ctx).WithError(err).Error("restore request failed")
 			} else {
 				return nil, err
 			}
