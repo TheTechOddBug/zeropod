@@ -2,6 +2,7 @@
 package node
 
 import (
+	"archive/tar"
 	"context"
 	"crypto/tls"
 	"errors"
@@ -496,24 +497,44 @@ func extract(ctx context.Context, id string, reader io.ReadCloser) error {
 	}
 	return format.Extract(ctx, reader, func(ctx context.Context, f archives.FileInfo) error {
 		name := filepath.Join(baseDir, filepath.Clean(f.NameInArchive))
+		header, ok := f.Sys().(*tar.Header)
 		if f.IsDir() {
-			return os.MkdirAll(name, f.Mode())
+			if err := os.MkdirAll(name, f.Mode()); err != nil {
+				return err
+			}
+			if err := os.Chmod(name, f.Mode()); err != nil {
+				return err
+			}
+			if !ok {
+				return nil
+			}
+			return os.Chown(name, int(header.Uid), int(header.Gid))
 		}
 
 		rc, err := f.Open()
 		if err != nil {
 			return err
 		}
+		defer rc.Close()
 
-		file, err := os.Create(name)
+		file, err := os.OpenFile(name, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, f.Mode())
 		if err != nil {
 			return err
 		}
+		defer file.Close()
 
 		if _, err := io.Copy(file, rc); err != nil {
 			return err
 		}
-		return nil
+
+		if err := os.Chmod(name, f.Mode()); err != nil {
+			return err
+		}
+
+		if !ok {
+			return nil
+		}
+		return os.Chown(name, int(header.Uid), int(header.Gid))
 	})
 }
 
