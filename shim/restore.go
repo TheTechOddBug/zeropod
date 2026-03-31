@@ -31,6 +31,7 @@ var (
 	ErrAlreadyRestored      = errors.New("container is already restored")
 	ErrRestoreRequestFailed = errors.New("restore request failed")
 	ErrRestoreDial          = errors.New("failed to connect to node socket")
+	ErrInvalidCheckpoint    = errors.New("checkpoint data invalid")
 )
 
 // Restore starts the container either from a checkpoint or from scratch
@@ -236,9 +237,11 @@ func MigrationRestore(ctx context.Context, r *task.CreateTaskRequest, cfg *Confi
 
 	log.G(ctx).Infof("restore response: %v", resp.MigrationInfo)
 
-	// TODO: validate that path is valid and contains image
+	if err := validateCheckpointData(nodev1.SnapshotPath(resp.MigrationInfo.ImageId)); err != nil {
+		return false, fmt.Errorf("%w: %w", ErrInvalidCheckpoint, err)
+	}
 	r.Checkpoint = nodev1.SnapshotPath(resp.MigrationInfo.ImageId)
-	log.G(ctx).Infof("setting checkpoint dir for restore: %s", nodev1.SnapshotPath(resp.MigrationInfo.ImageId))
+	log.G(ctx).Infof("setting checkpoint dir for restore: %s", r.Checkpoint)
 
 	// we set the criu work path for the live migration to work (the lazy pages
 	// socket needs to be there) and also so the restore stats are stored in the
@@ -322,4 +325,9 @@ func FinishRestore(ctx context.Context, id string, cfg *Config, startTime time.T
 	}
 
 	return nil
+}
+
+func validateCheckpointData(snapshotPath string) error {
+	_, err := os.Stat(filepath.Join(snapshotPath, "descriptors.json"))
+	return err
 }
