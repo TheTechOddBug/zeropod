@@ -161,6 +161,7 @@ func TestMigration(t *testing.T) {
 			cleanupService := createServiceAndWait(t, ctx, e2e.client, tc.svc, 1)
 			defer cleanupPod()
 			defer cleanupService()
+			probeHTTP(t, e2e.url())
 
 			for range tc.migrationCount {
 				tc.beforeMigration(t)

@@ -92,6 +92,10 @@ func (e2e *e2eConfig) cleanup() error {
 	return os.RemoveAll(e2e.kubeconfigName)
 }
 
+func (e2e *e2eConfig) url() string {
+	return fmt.Sprintf("http://127.0.0.1:%d", e2e.port)
+}
+
 var images = []image{
 	{
 		tag:        installerImage,
@@ -670,9 +674,6 @@ func waitForService(t testing.TB, ctx context.Context, c client.Client, svc *cor
 			printContainerdLogs(t, "zeropod-e2e-worker", "zeropod-e2e-worker2")
 		}
 	}
-	// we give it some more time before returning just to make sure it's
-	// really ready to receive requests.
-	time.Sleep(time.Millisecond * 500)
 }
 
 func endpointsReady(endpoints []discoveryv1.Endpoint) bool {
@@ -683,6 +684,20 @@ func endpointsReady(endpoints []discoveryv1.Endpoint) bool {
 		}
 	}
 	return ready == len(endpoints)
+}
+
+func probeHTTP(t testing.TB, addr string) {
+	c := &http.Client{
+		Timeout: time.Second * 1,
+	}
+	assert.Eventually(t, func() bool {
+		resp, err := c.Get(addr)
+		if err != nil {
+			return false
+		}
+		resp.Body.Close()
+		return true
+	}, time.Second*10, time.Millisecond*100)
 }
 
 func cordonNode(t testing.TB, ctx context.Context, client client.Client, name string) (uncordon func()) {
@@ -801,12 +816,16 @@ func restoreCount(t testing.TB, ctx context.Context, client client.Client, cfg *
 }
 
 func waitUntilScaledDown(t testing.TB, ctx context.Context, c client.Client, pod *corev1.Pod) {
-	for _, container := range pod.Spec.Containers {
-		require.Eventually(t, func() bool {
-			ok, err := isScaledDown(ctx, c, pod, container.Name)
-			t.Logf("scaled down: %v: %s", ok, pod.GetLabels()[path.Join(manager.StatusLabelKeyPrefix, container.Name)])
-			return err == nil && ok
-		}, time.Second*15, time.Second)
+	// we loop to ensure it is stable in scaled down state
+	for range 3 {
+		for _, container := range pod.Spec.Containers {
+			require.Eventually(t, func() bool {
+				ok, err := isScaledDown(ctx, c, pod, container.Name)
+				t.Logf("scaled down: %v: %s", ok, pod.GetLabels()[path.Join(manager.StatusLabelKeyPrefix, container.Name)])
+				return err == nil && ok
+			}, time.Second*15, time.Second)
+		}
+		time.Sleep(time.Second)
 	}
 }
 
