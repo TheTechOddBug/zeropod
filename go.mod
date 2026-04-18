@@ -34,7 +34,7 @@ require (
 	github.com/prometheus/procfs v0.15.1
 	github.com/stretchr/testify v1.11.1
 	github.com/vishvananda/netlink v1.3.1
-	golang.org/x/sys v0.39.0
+	golang.org/x/sys v0.43.0
 	google.golang.org/protobuf v1.36.10
 	k8s.io/api v0.34.0
 	k8s.io/apimachinery v0.34.0
@@ -43,7 +43,7 @@ require (
 	k8s.io/utils v0.0.0-20250604170112-4c0f3b243397
 	sigs.k8s.io/controller-runtime v0.20.0
 	sigs.k8s.io/controller-tools v0.19.0
-	sigs.k8s.io/kind v0.27.0
+	sigs.k8s.io/kind v0.31.0
 	sigs.k8s.io/kustomize/api v0.16.0
 	sigs.k8s.io/kustomize/kyaml v0.16.0
 )
@@ -86,7 +86,6 @@ require (
 	github.com/google/btree v1.1.3 // indirect
 	github.com/google/gnostic-models v0.7.0 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
-	github.com/google/safetext v0.0.0-20220905092116-b49f7bc46da2 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 // indirect

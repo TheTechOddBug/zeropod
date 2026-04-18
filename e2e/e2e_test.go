@@ -2,7 +2,6 @@ package e2e
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"runtime"
 	"strings"
@@ -228,6 +227,7 @@ func TestE2E(t *testing.T) {
 			cleanupService := createServiceAndWait(t, ctx, e2e.client, tc.svc, 1)
 			defer cleanupPod()
 			defer cleanupService()
+			probeHTTP(t, e2e.url())
 
 			if tc.waitScaledDown {
 				waitUntilScaledDown(t, ctx, e2e.client, tc.pod)
@@ -251,7 +251,7 @@ func TestE2E(t *testing.T) {
 						c.Transport = &http.Transport{DisableKeepAlives: !tc.keepAlive}
 
 						before := time.Now()
-						resp, err := c.Get(fmt.Sprintf("http://127.0.0.1:%d", e2e.port))
+						resp, err := c.Get(e2e.url())
 						if err != nil {
 							t.Error(err)
 							return
@@ -372,11 +372,12 @@ func TestE2E(t *testing.T) {
 		cleanupService := createServiceAndWait(t, ctx, e2e.client, testService(8080), 1)
 		defer cleanupPod()
 		defer cleanupService()
+		probeHTTP(t, e2e.url())
 		// we expect it to scale down even though a constant livenessProbe is
 		// hitting it
 		waitUntilScaledDown(t, ctx, e2e.client, pod)
 		// make a real request and expect it to scale down again
-		resp, err := c.Get(fmt.Sprintf("http://127.0.0.1:%d", e2e.port))
+		resp, err := c.Get(e2e.url())
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 		waitUntilScaledDown(t, ctx, e2e.client, pod)
